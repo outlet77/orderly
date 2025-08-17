@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c62828">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Orderly – Kellnersystem</title>
+<meta name="theme-color" content="#ffffff" />
+<style>
+:root{
+  --bg:#ffffff; --panel:#f9f9f9; --panel-2:#f3f3f3;
+  --red:#c62828; --red-dark:#8e0000; --muted:#555; --border:#e5e5e5;
+  --radius:12px; --shadow:0 6px 18px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#222}
+header{position:sticky;top:0;z-index:10;background:var(--red);color:#fff;box-shadow:var(--shadow)}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px}
+.row{display:flex;gap:10px;align-items:center}
+.col{display:grid;gap:10px}
+.push{margin-left:auto}
+h1{font-size:18px;margin:0;display:flex;gap:10px;align-items:center}
+.tabs{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.tab{border:none;background:rgba(255,255,255,.2);color:#fff;padding:12px 18px;border-radius:var(--radius);cursor:pointer;font-size:16px}
+.tab.active{background:#fff;color:var(--red);font-weight:700}
+main{padding:16px}
+h2{font-size:16px;margin:8px 0 12px;color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+.btn{border:none;background:var(--red);color:#fff;border-radius:var(--radius);padding:10px 14px;cursor:pointer}
+.btn.small{padding:6px 10px;font-size:14px}
+.btn.ghost{background:#fff;border:1px solid var(--red);color:var(--red)}
+.btn.icon{padding:6px 10px}
+.btn.primary{background:var(--red-dark)}
+.input, select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:#fff}
+.status{font-size:12px;border-radius:999px;padding:3px 10px}
+.frei{background:#e8f5e9;color:#2e7d32}
+.besetzt{background:#fff3e0;color:#ef6c00}
+.gezahlt{background:#eceff1;color:#37474f}
+.muted{color:var(--muted)}
+.total{font-weight:700;color:var(--red)}
+.line{height:1px;background:var(--border);margin:8px 0}
+.qty{display:inline-flex;align-items:center;gap:6px}
+.view.hidden{display:none}
+
+/* Untertisch-Pills */
+.sub-used{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{border:1px solid var(--red);color:var(--red);background:#fff;border-radius:999px;padding:2px 8px;font-size:12px}
+
+/* Kategorie-Bar */
+.catbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.catbtn{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}
+.catbtn.active{background:#c62828;color:#fff;border-color:#c62828}
+
+/* Modals */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.modal{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);max-width:680px;width:94%;padding:16px}
+.modal h3{margin:0 0 8px 0;color:var(--red)}
+.modal .row-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.modal .close{margin-left:auto;background:#fff;border:1px solid var(--border);color:#333;cursor:pointer;padding:6px 10px;border-radius:10px}
+.modal .grid-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.m-btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px;cursor:pointer}
+.m-btn:hover{border-color:#ccc}
+.m-btn.used{background:#ffecec;border-color:#ff9aa2;color:#8e0000;font-weight:600}
+.m-btn.current{box-shadow:0 0 0 2px #c62828 inset}
+
+/* Split-Payment hübsch */
+.pay-head{font-weight:600;color:var(--red)}
+.pay-list{display:grid;gap:8px}
+.pay-item{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff}
+.pay-name{flex:1 1 auto;display:grid}
+.pay-unit{font-size:12px;color:var(--muted)}
+.pay-qty{display:flex;align-items:center;gap:8px}
+.pay-qty input{width:80px;text-align:center;border:1px solid var(--border);border-radius:10px;padding:6px}
+.pay-line{width:90px;text-align:right;font-weight:700}
+.pay-methods{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}
+.pbtn{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer}
+.pbtn.active{background:#c62828;color:#fff;border-color:#c62828}
+.pbtn.cash.active{background:#2e7d32;border-color:#2e7d32}
+.pbtn.master.active{background:#1a73e8;border-color:#1a73e8}
+.pbtn.visa.active{background:#0b57d0;border-color:#0b57d0}
+.pbtn.ec.active{background:#455a64;border-color:#455a64}
+.pbtn.room.active{background:#f57c00;border-color:#f57c00}
+.pay-footer{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pay-total{margin-left:auto;font-weight:700}
+@media (max-width:560px){
+  .grid{grid-template-columns:1fr}
+  .modal .grid-btns{grid-template-columns:repeat(3,1fr)}
+  .pay-item{flex-wrap:wrap}
+  .pay-line{width:auto}
+}
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+    });
+  }
+</script>
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap row">
+    <h1>🍽️ <b>Orderly</b></h1>
+    <div class="tabs">
+      <button class="tab active" data-view="tables">Tische</button>
+      <button class="tab" data-view="menu">Karte</button>
+      <button class="tab" data-view="cart">Warenkorb</button>
+      <button class="tab" data-view="archive">Archiv</button>
+      <button class="tab" data-view="settings">Einstellungen</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="row" style="margin-bottom:8px">
+    <span>Aktiver Tisch: <b id="activeTableLabel">Keiner</b></span>
+    <span class="push">Summe: <b id="sumLabel" class="total">0,00 €</b></span>
+  </div>
+
+  <!-- Tische -->
+  <section id="view-tables" class="view">
+    <h2>Tische</h2>
+    <div id="tables" class="grid"></div>
+  </section>
+
+  <!-- Karte -->
+  <section id="view-menu" class="view hidden">
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+      <h2>Speise- & Getränkekarte</h2>
+      <div class="push"></div>
+      <button id="addCustom" class="btn small ghost">Eigenen Artikel</button>
+      <input id="search" type="search" class="input" placeholder="Suche… (z. B. Riesling, Radler, Cappuccino)" style="max-width:320px" />
+    </div>
+    <div id="catBar" class="catbar"></div>
+    <div id="menu" class="col"></div>
+  </section>
+
+  <!-- Warenkorb -->
+  <section id="view-cart" class="view hidden">
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+      <h2>Warenkorb</h2>
+      <button id="splitPayBtn" class="btn small">Split-Zahlung</button>
+      <button id="clearCart" class="btn small ghost push">Leeren</button>
+    </div>
+    <div id="cart" class="col"></div>
+    <div class="row" style="margin-top:12px">
+      <div>Summe</div>
+      <div id="cartTotal" class="total" style="margin-left:auto">0,00 €</div>
+      <button id="sendAll" class="btn primary">Alles abschließen (Methode wählen)</button>
+    </div>
+  </section>
+
+  <!-- Archiv -->
+  <section id="view-archive" class="view hidden">
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+      <h2>Archiv (Teil- & Vollzahlungen)</h2>
+      <input id="archSearch" class="input" placeholder="Suche (Master, Zimmer 203, Helles, 1.2, ARC-…)" style="max-width:320px">
+      <label style="display:flex;gap:6px;align-items:center">Von <input id="archFrom" type="date" class="input" style="width:auto"></label>
+      <label style="display:flex;gap:6px;align-items:center">Bis <input id="archTo" type="date" class="input" style="width:auto"></label>
+      <button id="archExport" class="btn small push">Export (JSON)</button>
+    </div>
+    <div id="archiveList" class="col"></div>
+  </section>
+
+  <!-- Einstellungen -->
+  <section id="view-settings" class="view hidden">
+    <h2>Einstellungen</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+      <div class="card col">
+        <label>Hotel-ID / Name <input id="cfgProperty" class="input" placeholder="Hotel-ID oder Name" /></label>
+        <label>Revenue-Center <input id="cfgRc" class="input" placeholder="z. B. Restaurant/Bar" /></label>
+        <label>Anzahl Tische <input id="cfgTables" class="input" type="number" min="1" max="100" /></label>
+        <button id="saveCfg" class="btn primary">Einstellungen speichern</button>
+        <button id="applyTables" class="btn">Tische neu anlegen</button>
+        <div class="muted" style="font-size:12px">Alle Daten werden lokal gespeichert.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Untertisch wählen -->
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="row-top">
+      <h3 id="modalTitle">Tisch wählen</h3>
+      <button class="close" id="modalClose">Schließen</button>
+    </div>
+    <div class="muted" id="modalHint" style="font-size:12px"></div>
+    <div id="modalBtns" class="grid-btns" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Split-Zahlung -->
+<div id="payBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="row-top">
+      <h3>Split-Zahlung</h3>
+      <button class="close" id="payClose">Schließen</button>
+    </div>
+    <div id="payBody" class="col"></div>
+  </div>
+</div>
+
+<!-- Voll-Abschluss (Methode + ggf. Zimmer) -->
+<div id="checkoutBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="row-top">
+      <h3>Abrechnung (Alles)</h3>
+      <button class="close" id="checkoutClose">Schließen</button>
+    </div>
+    <div class="pay-methods" id="fullPayMethods"></div>
+    <div id="fullRoomWrap" style="display:none">
+      <input id="fullRoomInput" class="input" placeholder="Zimmernummer / Name" />
+    </div>
+    <div class="pay-footer">
+      <div class="pay-total">Gesamt: <span id="fullTotal">0,00 €</span></div>
+      <button id="confirmFullPay" class="btn primary">Buchen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Helpers & Storage ===== */
+const $  = (s, el=document)=>el.querySelector(s);
+const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
+const euro = v => (v).toFixed(2).replace('.', ',') + ' €';
+const load = (k, f)=>{ try{ const v = localStorage.getItem(k); return v? JSON.parse(v): f; }catch{ return f; } };
+const save = (k, v)=>localStorage.setItem(k, JSON.stringify(v));
+
+function showView(name){
+  $$('.tab').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  $$('.view').forEach(v=>v.classList.add('hidden'));
+  const section = $('#view-'+name); if(section) section.classList.remove('hidden');
+}
+$$('.tab').forEach(btn=> btn.addEventListener('click',()=> showView(btn.dataset.view)));
+
+/* ===== State ===== */
+let cfg     = load('ord_cfg', { property:'', rc:'', tables:25 });
+let tables  = load('ord_tables', []);
+let archive = load('ord_archive', []);
+let activeTableId = load('ord_active_table', null);
+let activeCategory = load('ord_active_cat', 'Alle');
+
+/* ===== Menüdaten ===== */
+let menu   = load('ord_menu', [
+  { title:'Weissweine – Flasche (0,75 L)', items:[
+    {name:'2016 Riesling trocken', price:20.00},
+    {name:'Grauburgunder 13%', price:28.00},
+    {name:'Muskateller 12%', price:25.00},
+    {name:'Cabernet Blanc 13%', price:25.00},
+    {name:'2020 Grauburgunder trocken 14%', price:28.00}
+  ]},
+  { title:'Weissweine – glasweise', items:[
+    {name:'2016 Riesling 0,25 L', price:6.50},
+    {name:'2016 Riesling 0,125 L', price:4.50},
+    {name:'Grauburgunder 0,25 L', price:7.50},
+    {name:'Grauburgunder 0,125 L', price:5.50},
+    {name:'Muskateller 0,25 L', price:7.50},
+    {name:'Muskateller 0,125 L', price:5.50},
+    {name:'Cabernet Blanc 0,25 L', price:7.50},
+    {name:'Cabernet Blanc 0,125 L', price:5.50},
+    {name:'2020 Grauburgunder 0,25 L', price:9.00},
+    {name:'2020 Grauburgunder 0,125 L', price:6.50}
+  ]},
+  { title:'Rotweine – Flasche (0,75 L)', items:[
+    {name:'Trollinger–Lemberger 12,5%', price:19.00},
+    {name:'Lemberger trocken 14%', price:26.00},
+    {name:'Regent trocken 13%', price:20.00},
+    {name:'Acolon trocken 13%', price:20.00},
+    {name:'Samtrot lieblich 13,5%', price:25.00}
+  ]},
+  { title:'Rotweine – glasweise', items:[
+    {name:'Trollinger–Lemberger 0,25 L', price:6.50},
+    {name:'Trollinger–Lemberger 0,125 L', price:4.50},
+    {name:'Lemberger 0,25 L', price:7.50},
+    {name:'Lemberger 0,125 L', price:5.50},
+    {name:'Regent 0,25 L', price:7.50},
+    {name:'Regent 0,125 L', price:5.50},
+    {name:'Acolon 0,25 L', price:7.50},
+    {name:'Acolon 0,125 L', price:5.50},
+    {name:'Samtrot lieblich 0,25 L', price:8.50},
+    {name:'Samtrot lieblich 0,125 L', price:6.50}
+  ]},
+  { title:'Rosé & Sekt', items:[
+    {name:'MY SECCO 0,10 L', price:7.50},
+    {name:'MY SECCO Flasche 0,75 L', price:26.00},
+    {name:'2016 Auxerrois 0,75 L', price:32.00},
+    {name:'Pinot Rosé Sekt 0,75 L', price:34.00},
+    {name:'Muskattrollinger Rosé 1/4 L', price:7.50},
+    {name:'Muskattrollinger Rosé 1/8 L', price:5.50},
+    {name:'Muskattrollinger Rosé 0,75 L', price:25.00},
+    {name:'Lemberger Rosé 1/4 L', price:6.50},
+    {name:'Lemberger Rosé 1/8 L', price:5.50},
+    {name:'Schwarzriesling Rosé 1/4 L', price:6.50},
+    {name:'Schwarzriesling Rosé 1/8 L', price:5.50},
+    {name:'Schwarzriesling Rosé 0,75 L', price:20.00},
+    {name:'Muli Rosé 1/4 L', price:6.50},
+    {name:'Muli Rosé 1/8 L', price:5.50},
+    {name:'Muli Rosé 0,75 L', price:19.00},
+    {name:'Weinschorle weiß 1/4 L', price:5.50},
+    {name:'Weinschorle rot 1/4 L', price:5.50},
+    {name:'Aperol Sprizz 1/4 L', price:7.80}
+  ]},
+  { title:'Bier', items:[
+    {name:'Helles 0,5 L', price:5.20},
+    {name:'Fassbier 0,3 L', price:4.00},
+    {name:'Fassbier 0,5 L', price:5.20},
+    {name:'Hefeweizen 0,5 L', price:5.20},
+    {name:'Weizen naturtrüb 0,5 L', price:5.20},
+    {name:'Weizen Kristall 0,5 L', price:5.20},
+    {name:'Weizen dunkel 0,5 L', price:5.20},
+    {name:'Weizen alkoholfrei 0,5 L', price:5.20},
+    {name:'Alkoholfreies Pils 0,3 L', price:4.00},
+    {name:'Radler 0,3 L', price:4.00},
+    {name:'Radler 0,5 L', price:5.20},
+    {name:'Russ (Weizen + Sprite) 0,5 L', price:5.20},
+    {name:'Cola-Weizen 0,5 L', price:5.20}
+  ]},
+  { title:'Softdrinks', items:[
+    {name:'Wasser still 0,25 L', price:3.50},
+    {name:'Wasser spritzig 0,25 L', price:3.50},
+    {name:'Wasser still 0,75 L', price:7.00},
+    {name:'Wasser spritzig 0,75 L', price:7.00},
+    {name:'Apfelschorle 0,25 L', price:3.50},
+    {name:'Orangensaft 0,20 L', price:3.50},
+    {name:'Grapefruitsaft 0,20 L', price:3.50},
+    {name:'Coca-Cola 0,20 L', price:3.60},
+    {name:'Coca-Cola Zero 0,20 L', price:3.60},
+    {name:'Fanta 0,20 L', price:3.60},
+    {name:'mezzo mix 0,20 L', price:3.60},
+    {name:'Bitter Lemon 0,20 L', price:3.50},
+    {name:'Tonic Water 0,20 L', price:3.50},
+    {name:'Ginger Ale 0,20 L', price:3.50},
+    {name:'Red Bull', price:4.50},
+    {name:'Icetea', price:2.50}
+  ]},
+  { title:'Heißgetränke', items:[
+    {name:'Tasse Kaffee', price:3.00},
+    {name:'Glas Tee', price:3.00},
+    {name:'Milchkaffee', price:4.00},
+    {name:'Espresso', price:3.00},
+    {name:'Doppelter Espresso', price:4.20},
+    {name:'Cappuccino', price:3.80},
+    {name:'Latte Macchiato', price:4.20},
+    {name:'Heiße Schokolade', price:3.60}
+  ]},
+  { title:'Snacks', items:[
+    {name:'Verdure Grigliate (gegrilltes Gemüse & Käse)', price:8.90},
+    {name:'Flammkuchen „Classic“', price:7.90}
+  ]}
+]);
+
+/* ===== Cart je (Unter-)Tisch ===== */
+function cartKey(tableId){ return `ord_cart_${tableId}`; }
+function getCart(tableId){ return load(cartKey(tableId), []); }
+function setCart(tableId, cart){ save(cartKey(tableId), cart); }
+
+/* ===== Elemente ===== */
+const tablesEl  = $('#tables');
+const menuEl    = $('#menu');
+const catBarEl  = $('#catBar');
+const searchEl  = $('#search');
+const cartEl    = $('#cart');
+const archiveListEl = $('#archiveList');
+const totalLbl  = $('#cartTotal');
+const sumLbl    = $('#sumLabel');
+const activeLbl = $('#activeTableLabel');
+
+/* ===== Modals ===== */
+const backdrop = $('#modalBackdrop');
+const modalTitle = $('#modalTitle');
+const modalHint = $('#modalHint');
+const modalBtns = $('#modalBtns');
+$('#modalClose').addEventListener('click', ()=> backdrop.style.display='none');
+
+const payBackdrop = $('#payBackdrop');
+const payBody = $('#payBody');
+$('#payClose').addEventListener('click', ()=> payBackdrop.style.display='none');
+
+const checkoutBackdrop = $('#checkoutBackdrop');
+$('#checkoutClose').addEventListener('click', ()=> checkoutBackdrop.style.display='none');
+
+/* ===== Untertisch-Helfer ===== */
+function usedSubtables(mainId){
+  const used = [];
+  if(getCart(String(mainId)).length>0) used.push(String(mainId));
+  for(let i=1;i<=10;i++){ const id=`${mainId}.${i}`; if(getCart(id).length>0) used.push(id); }
+  return used;
+}
+
+/* ===== Untertisch-Auswahl ===== */
+function openSubtablePicker(mainIndex){
+  modalTitle.textContent = `Tisch ${mainIndex} auswählen`;
+  modalHint.textContent = 'Wähle Haupttisch oder Untertisch (1…10).';
+  modalBtns.innerHTML = '';
+  const makeBtn=(label,id)=>{
+    const b=document.createElement('button'); b.className='m-btn';
+    if(getCart(id).length>0) b.classList.add('used');
+    if(activeTableId===id)   b.classList.add('current');
+    b.textContent=label; b.onclick=()=>selectTable(id); return b;
+  };
+  modalBtns.appendChild(makeBtn(`${mainIndex}`,`${mainIndex}`));
+  for(let i=1;i<=10;i++) modalBtns.appendChild(makeBtn(`${mainIndex}.${i}`,`${mainIndex}.${i}`));
+  backdrop.style.display='flex';
+}
+function selectTable(id){
+  activeTableId=id; save('ord_active_table', id);
+  activeLbl.textContent=`Tisch ${id}`;
+  const main=String(id).split('.')[0];
+  const t=tables.find(x=>String(x.id)===main);
+  if(t&&t.status==='frei'){ t.status='besetzt'; save('ord_tables', tables); renderTables(); }
+  backdrop.style.display='none';
+  /* WICHTIG: direkt Karte öffnen */
+  showView('menu');
+  renderMenu();
+  renderCart();
+  updateSumLabel();
+}
+
+/* ===== Tische ===== */
+function ensureTables(){
+  if(tables.length===0){
+    const n=cfg.tables||25;
+    tables=Array.from({length:n},(_,i)=>({id:i+1,name:'Tisch '+(i+1),status:'frei'}));
+    save('ord_tables',tables);
+  }
+}
+function renderTables(){
+  tablesEl.innerHTML='';
+  tables.forEach(t=>{
+    const card=document.createElement('div'); card.className='card';
+    const used=usedSubtables(t.id);
+    card.innerHTML=`
+      <div class="row">
+        <div><b>${t.name}</b><div class="muted" style="font-size:12px">${t.status}</div></div>
+        <span class="status ${t.status} push">${t.status}</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small" data-open>Öffnen</button>
+        <button class="btn small ghost" data-close>Abrechnen</button>
+      </div>
+      ${used.length?`<div class="sub-used">${used.map(id=>`<span class="pill">${id}</span>`).join('')}</div>`:''}
+    `;
+    card.querySelector('[data-open]').onclick=()=>openSubtablePicker(t.id);
+    card.querySelector('[data-close]').onclick=()=>{
+      /* Abrechnen des gesamten Haupttischs (öffnet Methode-Dialog) */
+      const mainId=String(t.id);
+      const ids=[mainId, ...Array.from({length:10},(_,i)=>`${mainId}.${i+1}`)];
+      const carts=ids.flatMap(id=>getCart(id));
+      const total=carts.reduce((s,i)=>s+i.unitPrice*i.qty,0);
+      if(total<=0){ alert('Keine offenen Positionen für diesen Tisch/Untertische.'); return; }
+      openFullCheckoutForIds(ids, total);
+    };
+    tablesEl.appendChild(card);
+  });
+}
+
+/* ===== Kategorien ===== */
+function allCategories(){
+  const cats = ['Alle', ...menu.map(c=>c.title)];
+  return cats;
+}
+function renderCatBar(){
+  const cats = allCategories();
+  catBarEl.innerHTML='';
+  cats.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='catbtn'+(c===activeCategory?' active':'');
+    b.textContent=c;
+    b.onclick=()=>{ activeCategory=c; save('ord_active_cat', c); renderCatBar(); renderMenu(); };
+    catBarEl.appendChild(b);
+  });
+}
+
+/* ===== Menü + Suche + Custom Item ===== */
+function addToCart(name, price){
+  if(!activeTableId){ alert('Bitte zuerst einen Tisch auswählen.'); showView('tables'); return; }
+  const cart=getCart(activeTableId);
+  const idx=cart.findIndex(i=>i.name===name&&i.unitPrice===price);
+  if(idx>-1) cart[idx].qty+=1; else cart.push({name,unitPrice:price,qty:1});
+  setCart(activeTableId,cart); renderCart(); renderTables(); updateSumLabel();
+}
+function renderMenu(){
+  const q=(searchEl?.value||'').toLowerCase();
+  menuEl.innerHTML='';
+  const catsToRender = activeCategory==='Alle' ? menu : menu.filter(c=>c.title===activeCategory);
+
+  catsToRender.forEach(cat=>{
+    const items=cat.items.filter(it=>it.name.toLowerCase().includes(q));
+    if(!items.length) return;
+    const box=document.createElement('div'); box.className='card col';
+    box.innerHTML=`<div class="row"><b style="color:var(--red)">${cat.title}</b></div>`;
+    items.forEach(it=>{
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML=`
+        <div style="display:grid">
+          <b>${it.name}</b>
+          <span class="muted" style="font-size:12px">${euro(+it.price||0)}</span>
+        </div>
+        <button class="btn small push" data-add>Hinzufügen</button>`;
+      row.querySelector('[data-add]').onclick=()=>addToCart(it.name,+it.price||0);
+      box.appendChild(row);
+      const hr=document.createElement('div'); hr.className='line'; box.appendChild(hr);
+    });
+    menuEl.appendChild(box);
+  });
+}
+searchEl?.addEventListener('input',renderMenu);
+/* Manueller Artikel */
+$('#addCustom').addEventListener('click', ()=>{
+  if(!activeTableId){ alert('Bitte zuerst einen Tisch auswählen.'); return; }
+  const name = prompt('Artikelname:','Sonderartikel');
+  if(!name) return;
+  const priceStr = prompt('Preis (z. B. 4.50):','0.00');
+  const price = parseFloat((priceStr||'').replace(',','.'));
+  if(isNaN(price) || price<0){ alert('Ungültiger Preis.'); return; }
+  addToCart(name, +price);
+});
+
+/* ===== Warenkorb ===== */
+function calcTotal(cart){ return cart.reduce((s,i)=>s+i.unitPrice*i.qty,0); }
+function changeQty(index,delta){
+  if(!activeTableId) return; const cart=getCart(activeTableId); if(!cart[index]) return;
+  cart[index].qty+=delta; if(cart[index].qty<=0) cart.splice(index,1);
+  setCart(activeTableId,cart); renderCart(); renderTables(); updateSumLabel();
+}
+function removeItem(index){
+  if(!activeTableId) return; const cart=getCart(activeTableId); cart.splice(index,1);
+  setCart(activeTableId,cart); renderCart(); renderTables(); updateSumLabel();
+}
+function updateSumLabel(){
+  if(!activeTableId){ sumLbl.textContent=euro(0); totalLbl.textContent=euro(0); return; }
+  const cart=getCart(activeTableId); const total=calcTotal(cart);
+  sumLbl.textContent=euro(total); totalLbl.textContent=euro(total);
+}
+function renderCart(){
+  cartEl.innerHTML='';
+  if(!activeTableId){
+    cartEl.innerHTML='<div class="card"><div class="muted">Kein Tisch aktiv. Bitte Tisch öffnen.</div></div>';
+    totalLbl.textContent='0,00 €'; return;
+  }
+  const cart=getCart(activeTableId);
+  if(cart.length===0){
+    cartEl.innerHTML=`<div class="card"><div class="muted">Noch keine Positionen für Tisch ${activeTableId}.</div></div>`;
+  } else {
+    cart.forEach((it,idx)=>{
+      const row=document.createElement('div'); row.className='card row';
+      const lineTotal=it.unitPrice*it.qty;
+      row.innerHTML=`<div style="display:grid">
+                       <b>${it.name}</b>
+                       <span class="muted" style="font-size:12px">${euro(it.unitPrice)} / Stk.</span>
+                     </div>
+                     <div class="qty push">
+                       <button class="btn icon" data-minus>-</button>
+                       <b>${it.qty}</b>
+                       <button class="btn icon" data-plus>+</button>
+                     </div>
+                     <div style="width:90px;text-align:right"><b>${euro(lineTotal)}</b></div>
+                     <button class="btn icon ghost" title="Löschen" data-del>🗑</button>`;
+      row.querySelector('[data-plus]').onclick=()=>changeQty(idx,+1);
+      row.querySelector('[data-minus]').onclick=()=>changeQty(idx,-1);
+      row.querySelector('[data-del]').onclick =()=>removeItem(idx);
+      cartEl.appendChild(row);
+    });
+  }
+  totalLbl.textContent=euro(calcTotal(getCart(activeTableId)));
+}
+
+/* ===== Zahlungsarten ===== */
+const METHODS=[ {key:'Cash', cls:'cash'}, {key:'Mastercard', cls:'master'}, {key:'Visa', cls:'visa'}, {key:'EC', cls:'ec'}, {key:'Zimmer', cls:'room'} ];
+
+/* Split-Zahlung */
+function openSplitPayment(){
+  if(!activeTableId){ alert('Kein Tisch aktiv.'); return; }
+  const cart=getCart(activeTableId);
+  if(cart.length===0){ alert('Warenkorb ist leer.'); return; }
+
+  let selectedMethod='Cash';
+  let selectedRoom='';
+
+  payBody.innerHTML='';
+  const root=document.createElement('div'); root.className='col';
+  const head=document.createElement('div'); head.className='pay-head';
+  head.textContent=`Tisch ${activeTableId} – wähle, wie viele Stück du jetzt abschließen willst.`;
+  const list=document.createElement('div'); list.className='pay-list';
+
+  const rows=[];
+  cart.forEach((it)=>{
+    const div=document.createElement('div'); div.className='pay-item';
+    div.innerHTML=`<div class="pay-name"><span>${it.name}</span><span class="pay-unit">${euro(it.unitPrice)} / Stk. • Offen: ${it.qty}</span></div>
+                   <div class="pay-qty"><input type="number" min="0" max="${it.qty}" value="0" data-qty></div>
+                   <div class="pay-line" data-sub>0,00 €</div>`;
+    const qty=div.querySelector('[data-qty]'); const sub=div.querySelector('[data-sub]');
+    qty.addEventListener('input',()=>{
+      let v=parseInt(qty.value||'0',10); if(v<0)v=0; if(v>it.qty)v=it.qty; qty.value=v; sub.textContent=euro(v*it.unitPrice); recalc();
+    });
+    rows.push({qty, price:it.unitPrice}); list.appendChild(div);
+  });
+
+  const methods=document.createElement('div'); methods.className='pay-methods';
+  METHODS.forEach((m,idx)=>{
+    const b=document.createElement('button'); b.className=`pbtn ${m.cls} ${idx===0?'active':''}`; b.textContent=m.key;
+    b.onclick=()=>{
+      selectedMethod=m.key; $$('.pbtn',methods).forEach(x=>x.classList.remove('active')); b.classList.add('active');
+      roomWrap.style.display = (selectedMethod==='Zimmer') ? 'block' : 'none';
+    };
+    methods.appendChild(b);
+  });
+
+  const roomWrap=document.createElement('div');
+  roomWrap.style.display='none';
+  roomWrap.innerHTML=`<input class="input" id="splitRoomInput" placeholder="Zimmernummer / Name" />`;
+
+  const foot=document.createElement('div'); foot.className='pay-footer';
+  foot.innerHTML=`<button class="btn ghost" id="payCancel">Abbrechen</button>
+                  <div class="pay-total">Zwischensumme: <span id="splitTotal">0,00 €</span></div>
+                  <button class="btn primary" id="payConfirm">Buchen</button>`;
+
+  root.append(head, list, methods, roomWrap, foot);
+  payBody.appendChild(root);
+  payBackdrop.style.display='flex';
+
+  function recalc(){
+    let total=0; rows.forEach(r=>{ total+= (parseInt(r.qty.value||'0',10)||0)*r.price; });
+    $('#splitTotal').textContent=euro(total);
+  }
+  $('#payCancel').onclick=()=> payBackdrop.style.display='none';
+  $('#payConfirm').onclick=()=>{
+    const payItems=[]; let any=false;
+    const cartNow=getCart(activeTableId);
+    cartNow.forEach((it,idx)=>{
+      const q=parseInt(rows[idx].qty.value||'0',10)||0;
+      if(q>0){ any=true; payItems.push({name:it.name,unitPrice:it.unitPrice,qty:q}); it.qty-=q; }
+    });
+    if(!any){ alert('Nichts ausgewählt.'); return; }
+    if(selectedMethod==='Zimmer'){
+      selectedRoom = ($('#splitRoomInput')?.value||'').trim();
+      if(!selectedRoom) { alert('Bitte Zimmernummer/Name eingeben.'); return; }
+    }
+    const newCart=cartNow.filter(i=>i.qty>0); setCart(activeTableId,newCart);
+
+    const total = payItems.reduce((s,i)=>s+i.unitPrice*i.qty,0);
+    const entry = { id:'ARC-'+Math.floor(Math.random()*100000), tableId:activeTableId, method:selectedMethod, room:selectedMethod==='Zimmer'?selectedRoom:undefined, items:payItems, total, ts:Date.now() };
+    archive.push(entry); save('ord_archive', archive);
+
+    payBackdrop.style.display='none'; renderCart(); renderTables(); renderArchive();
+    alert(`Teilzahlung gebucht: ${euro(total)} via ${selectedMethod}${selectedRoom?(' (Zimmer '+selectedRoom+')'):''}`);
+  };
+}
+
+/* Voll-Abschluss (alles zusammen) */
+function openFullCheckoutForIds(ids, precomputedTotal=null){
+  $('#fullPayMethods').innerHTML='';
+  let selected='Cash';
+  METHODS.forEach((m,i)=>{
+    const b=document.createElement('button');
+    b.className=`pbtn ${m.cls} ${i===0?'active':''}`;
+    b.textContent=m.key;
+    b.onclick=()=>{
+      selected=m.key;
+      $$('.pbtn', $('#fullPayMethods')).forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      $('#fullRoomWrap').style.display = (selected==='Zimmer') ? 'block' : 'none';
+    };
+    $('#fullPayMethods').appendChild(b);
+  });
+  const total = precomputedTotal!==null ? precomputedTotal :
+    ids.flatMap(id=>getCart(id)).reduce((s,i)=>s+i.unitPrice*i.qty,0);
+
+  $('#fullTotal').textContent = euro(total);
+  $('#fullRoomWrap').style.display='none';
+  checkoutBackdrop.style.display='flex';
+
+  $('#confirmFullPay').onclick=()=>{
+    if(total<=0){ alert('Nichts offen.'); return; }
+    let roomVal='';
+    if(selected==='Zimmer'){
+      roomVal = ($('#fullRoomInput').value||'').trim();
+      if(!roomVal){ alert('Zimmernummer/Name eingeben.'); return; }
+    }
+    /* ins Archiv und alle genannten Carts leeren */
+    archive.push({
+      id:'ARC-'+Math.floor(Math.random()*100000),
+      tableId: ids.join(','),
+      method: selected,
+      room: selected==='Zimmer'?roomVal:undefined,
+      items: ids.flatMap(id=>getCart(id)),
+      total,
+      ts: Date.now()
+    });
+    save('ord_archive', archive);
+    ids.forEach(id=> setCart(id, []) );
+
+    checkoutBackdrop.style.display='none';
+    renderCart(); renderTables(); renderArchive();
+    alert(`Abschluss: ${euro(total)} via ${selected}${roomVal?(' (Zimmer '+roomVal+')'):''}`);
+  };
+}
+
+/* Archiv */
+function renderArchive(){
+  archiveListEl.innerHTML='';
+  const q=($('#archSearch')?.value||'').toLowerCase();
+  const from=$('#archFrom')?.value ? new Date($('#archFrom').value).getTime() : null;
+  const to=$('#archTo')?.value ? (new Date($('#archTo').value).getTime()+24*3600*1000-1) : null;
+
+  let data=archive.slice().sort((a,b)=>b.ts-a.ts);
+  data=data.filter(e=>{
+    const txt=(e.id+' '+e.tableId+' '+(e.method||'')+' '+(e.room||'')+' '+e.items.map(i=>i.name).join(' ')).toLowerCase();
+    if(q && !txt.includes(q)) return false;
+    if(from && e.ts<from) return false;
+    if(to && e.ts>to) return false;
+    return true;
+  });
+
+  if(data.length===0){
+    archiveListEl.innerHTML='<div class="card"><div class="muted">Keine Einträge im Archiv (Filter prüfen?).</div></div>'; return;
+  }
+  data.forEach(e=>{
+    const c=document.createElement('div'); c.className='card';
+    const date=new Date(e.ts).toLocaleString();
+    const items=e.items.map(i=>`${i.qty||1}× ${i.name} (${euro(i.unitPrice||i.price||0)})`).join(', ');
+    c.innerHTML=`<div class="row">
+      <div><b>${e.id}</b> – Tisch <b>${e.tableId}</b><div class="muted" style="font-size:12px">${date}</div></div>
+      <span class="pill">${e.method}${e.room?(' · Zimmer '+e.room):''}</span>
+      <div class="total push">${euro(e.total)}</div>
+    </div>
+    <div class="muted" style="margin-top:6px">${items}</div>`;
+    archiveListEl.appendChild(c);
+  });
+}
+
+/* Buttons */
+$('#splitPayBtn').addEventListener('click', openSplitPayment);
+$('#clearCart').addEventListener('click', ()=>{ if(!activeTableId){ alert('Kein Tisch aktiv.'); return; } setCart(activeTableId,[]); renderCart(); renderTables(); updateSumLabel(); });
+$('#sendAll').addEventListener('click', ()=>{
+  if(!activeTableId){ alert('Kein Tisch aktiv.'); return; }
+  const idList=[activeTableId]; // nur aktueller (Unter-)Tisch
+  const total=idList.flatMap(id=>getCart(id)).reduce((s,i)=>s+i.unitPrice*i.qty,0);
+  if(total<=0){ alert('Warenkorb ist leer.'); return; }
+  openFullCheckoutForIds(idList, total);
+});
+$('#applyTables').addEventListener('click', ()=>{
+  const n=Math.max(1,Math.min(100,parseInt($('#cfgTables').value)||25));
+  cfg.tables=n; save('ord_cfg',cfg);
+  tables=Array.from({length:n},(_,i)=>({id:i+1,name:'Tisch '+(i+1),status:'frei'}));
+  save('ord_tables',tables); renderTables();
+});
+$('#saveCfg').addEventListener('click', ()=>{
+  cfg.property=$('#cfgProperty').value.trim();
+  cfg.rc=$('#cfgRc').value.trim();
+  save('ord_cfg',cfg); alert('Einstellungen gespeichert.');
+});
+$('#archSearch')?.addEventListener('input',renderArchive);
+$('#archFrom')?.addEventListener('change',renderArchive);
+$('#archTo')?.addEventListener('change',renderArchive);
+$('#archExport')?.addEventListener('click', ()=>{
+  const blob=new Blob([JSON.stringify(archive,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='orderly-archiv.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+/* Init */
+function init(){
+  ensureTables();
+  renderTables(); renderCatBar(); renderMenu(); renderCart(); renderArchive();
+  showView('tables');
+  if($('#cfgTables')) $('#cfgTables').value=cfg.tables;
+  if($('#cfgProperty')) $('#cfgProperty').value=cfg.property||'';
+  if($('#cfgRc')) $('#cfgRc').value=cfg.rc||'';
+  if(activeTableId){ activeLbl.textContent=`Tisch ${activeTableId}`; updateSumLabel(); }
+}
+init();
+</script>
+</body>
+</html>
