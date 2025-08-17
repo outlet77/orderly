@@ -34,7 +34,7 @@ jobs:
 
       # Wichtig: dein Web-Code liegt im Ordner www (index.html, manifest, service-worker, icons)
       - name: Init Capacitor
-        run: npx cap init orderly com.outlet77.orderly --web-dir=www --npm-client=npm
+        run: npx cap init orderly com.outlet77.orderly --web-dir=www --yes
 
       - name: Add Android platform
         run: npx cap add android
