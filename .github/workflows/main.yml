@@ -1,0 +1,52 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:   # manuell startbar
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Java (für Android-Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor CLI
+        run: |
+          npm i -g @ionic/cli
+          npm i @capacitor/core @capacitor/cli
+
+      # Wichtig: dein Web-Code liegt im Ordner www (index.html, manifest, service-worker, icons)
+      - name: Init Capacitor
+        run: npx cap init orderly com.outlet77.orderly --web-dir=www --npm-client=npm
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: orderly-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
