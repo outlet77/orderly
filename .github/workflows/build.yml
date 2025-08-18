@@ -26,27 +26,29 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Capacitor CLI
-        run: npm i -g @capacitor/cli@latest
+      # 1. Dependencies installieren
+      - name: Install dependencies
+        run: npm ci
 
-      # Wichtig: KEIN --npm-client mehr!
-      - name: Init Capacitor (if not already)
-        run: |
-          if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
-            npx cap init "Orderly" "com.outlet77.orderly" --web-dir=www 
-          fi
+      # 2. Web-Build erzeugen
+      - name: Build web app
+        run: npm run build
 
-      - name: Add Android platform
-        run: npx cap add android --skip-deps
+      # 3. Capacitor sync (statt "add android")
+      - name: Capacitor sync
+        run: npx cap sync android
 
-      - name: Copy web assets
-        run: npx cap copy
+      # 4. Gradlew ausführbar machen
+      - name: Make gradlew executable
+        run: cd android && chmod +x gradlew
 
+      # 5. Debug-APK bauen
       - name: Build debug APK
         run: |
           cd android
           ./gradlew assembleDebug
 
+      # 6. APK hochladen
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
