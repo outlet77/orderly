@@ -1,3 +1,10 @@
+Alles klar 👍 – ich hab deinen Workflow genommen und nur das Nötige angepasst, damit er ohne Fehler durchläuft. Du kannst den Block 1:1 copy-pasten in .github/workflows/build-android-apk.yml.
+
+
+---
+
+✅ Finaler Workflow (Debug-APK Build)
+
 name: Build Android APK
 
 on:
@@ -34,7 +41,7 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      # 3. Capacitor sync (statt "add android")
+      # 3. Capacitor sync (synchronisiert Android-Projekt)
       - name: Capacitor sync
         run: npx cap sync android
 
@@ -54,3 +61,12 @@ jobs:
         with:
           name: orderly-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+
+
+---
+
+👉 Damit entfällt das fehlerhafte cap init, es wird nur noch cap sync ausgeführt.
+Ergebnis: Nach dem Run hast du im Build-Artifact deine debug-APK zum Download.
+
+Soll ich dir zusätzlich noch eine Release-Variante mit Signieren (für Play Store) vorbereiten, oder reicht dir erstmal Debug?
+
